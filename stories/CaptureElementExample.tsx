@@ -26,21 +26,24 @@ export default function CaptureElementExample({
       >
         <CaptureElement onCapture={({ dataUrl }) => console.log(dataUrl)}>
           {({ startCapture }) => (
-            <div
-              style={{
-                backgroundColor,
-                height: 300,
-                width: 300,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                fontWeight: "bold",
-                fontSize: 20,
-              }}
-              onClick={startCapture}
-            >
-              Zoom in it!
-            </div>
+            <>
+              <button onClick={startCapture}>start Capture</button>
+              <div
+                style={{
+                  backgroundColor,
+                  height: 300,
+                  width: 300,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  fontWeight: "bold",
+                  fontSize: 20,
+                }}
+                onClick={startCapture}
+              >
+                Capture me!
+              </div>
+            </>
           )}
         </CaptureElement>
       </div>
