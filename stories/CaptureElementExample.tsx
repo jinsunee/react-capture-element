@@ -1,7 +1,7 @@
 import React from "react";
 import { CaptureElement } from "../src";
 
-export default function PinchZoomExample({
+export default function CaptureElementExample({
   backgroundColor = "purple",
 }: {
   backgroundColor: string;

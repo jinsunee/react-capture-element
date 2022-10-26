@@ -1,1 +1,1 @@
-# react-pinch-zoom-element
+# react-capture-element

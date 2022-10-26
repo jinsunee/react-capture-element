@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import html2canvas from "html2canvas";
-import { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 
 import { useElementSize } from "./useElementSize";
 import { isTouchEvent } from "./utils";
