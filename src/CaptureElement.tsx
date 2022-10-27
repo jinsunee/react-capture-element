@@ -61,6 +61,8 @@ export function CaptureElement({
   const [crossHairsLeft, setCrossHairsLeft] = useState<number>(0);
   const [showCursor, setShowCursor] = useState<boolean>(false);
 
+  const canvasRef = useRef<any>(null);
+
   const handleStart = (e: any) => {
     const isMobile = isTouchEvent(e);
     if (
@@ -181,11 +183,8 @@ export function CaptureElement({
   };
 
   const handleClickTakeScreenShot = async () => {
-    const body = document.querySelector("body");
-
-    if (body) {
-      const canvas = await html2canvas(body);
-
+    const canvas = canvasRef.current;
+    if (canvas != null) {
       const croppedCanvas = document.createElement("canvas");
       const croppedCanvasContext = croppedCanvas.getContext("2d", {
         willReadFrequently: true,
@@ -214,7 +213,12 @@ export function CaptureElement({
     }
   };
 
-  const handleStartCapture = useCallback(() => {
+  const handleStartCapture = useCallback(async () => {
+    const body = document.querySelector("body");
+    if (body) {
+      html2canvas(body).then((canvas) => (canvasRef.current = canvas));
+    }
+
     setCaptureMode("ON");
     setShowCursor(true);
   }, []);
