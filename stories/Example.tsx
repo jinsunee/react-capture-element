@@ -71,7 +71,9 @@ export default function Example({
         </CaptureElement>
       </div>
       <div style={{ flex: 1 }}>
-        {dataUrl != null && <img alt="data-url-image" src={dataUrl} />}
+        {dataUrl != null && (
+          <img alt="data-url-image" src={dataUrl} style={{ width: 300 }} />
+        )}
       </div>
     </div>
   );
