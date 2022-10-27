@@ -232,18 +232,15 @@ export function CaptureElement({
     const content = document.getElementById("content");
 
     if (content != null) {
-      const { x, y } = content?.getBoundingClientRect();
+      const { x, y, width, height } = content?.getBoundingClientRect();
       setElementPositionLeft(x);
       setElementPositionTop(y);
+      const borderWidth = `0px ${width}px ${height}px 0px`;
+
+      initialBorderWidth.current = borderWidth;
+      setBorderWidth(borderWidth);
     }
   }, []);
-
-  useEffect(() => {
-    const borderWidth = `0px ${elementWidth}px ${elementHeight}px 0px`;
-
-    initialBorderWidth.current = borderWidth;
-    setBorderWidth(borderWidth);
-  }, [elementWidth, elementHeight]);
 
   useEffect(() => {
     if (captureMode === "ON" && captureStatus !== "DONE") {

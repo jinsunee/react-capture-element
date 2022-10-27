@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { CaptureElement } from "../src";
 
-export default function CaptureElementExample({
+export default function Example({
   backgroundColor = "purple",
 }: {
   backgroundColor: string;
 }) {
+  const [dataUrl, setDataUrl] = useState<string>();
+
   return (
     <div
       style={{
@@ -13,19 +15,17 @@ export default function CaptureElementExample({
         height: "100vh",
         display: "flex",
         justifyContent: "center",
-        alignItems: "center",
       }}
     >
       <div
         style={{
           position: "relative",
-          border: "1px solid green",
           overflow: "hidden",
           width: 400,
           height: 400,
         }}
       >
-        <CaptureElement onCapture={({ dataUrl }) => console.log(dataUrl)}>
+        <CaptureElement onCapture={({ dataUrl }) => setDataUrl(dataUrl)}>
           {({
             captureMode,
             captureStatus,
@@ -69,6 +69,9 @@ export default function CaptureElementExample({
             </>
           )}
         </CaptureElement>
+      </div>
+      <div style={{ flex: 1 }}>
+        {dataUrl != null && <img alt="data-url-image" src={dataUrl} />}
       </div>
     </div>
   );
