@@ -19,6 +19,8 @@ interface Props {
     dataUrl: string;
   }) => void;
   cursorColor?: string;
+  overlayColor?: string;
+  overlayOpacity?: number;
   children: (props: {
     captureMode: CaptureMode;
     captureStatus: CaptureStatus;
@@ -35,10 +37,12 @@ interface Props {
 export function CaptureElement({
   onCapture,
   cursorColor = "#000",
+  overlayColor = "#000",
+  overlayOpacity = 0.5,
   children,
 }: Props) {
   const { elementWidth, elementHeight } = useElementSize(
-    document.getElementById("wrapper")
+    document.getElementById("content")
   );
 
   const [captureMode, setCaptureMode] = useState<CaptureMode>("OFF");
@@ -215,6 +219,8 @@ export function CaptureElement({
     setCaptureMode("OFF");
     setCaptureStatus("NOT_YET");
     setBorderWidth(initialBorderWidth.current!);
+    setCrossHairsLeft(0);
+    setCrossHairsTop(0);
   }, []);
 
   const handleResetCapture = useCallback(() => {
@@ -223,22 +229,20 @@ export function CaptureElement({
   }, []);
 
   useEffect(() => {
-    const wrapper = document.getElementById("wrapper");
+    const content = document.getElementById("content");
 
-    if (wrapper != null) {
-      const { x, y } = wrapper?.getBoundingClientRect();
+    if (content != null) {
+      const { x, y } = content?.getBoundingClientRect();
       setElementPositionLeft(x);
       setElementPositionTop(y);
     }
   }, []);
 
   useEffect(() => {
-    if (elementWidth && elementHeight) {
-      const borderWidth = `0px ${elementWidth}px ${elementHeight}px 0px`;
+    const borderWidth = `0px ${elementWidth}px ${elementHeight}px 0px`;
 
-      initialBorderWidth.current = borderWidth;
-      setBorderWidth(borderWidth);
-    }
+    initialBorderWidth.current = borderWidth;
+    setBorderWidth(borderWidth);
   }, [elementWidth, elementHeight]);
 
   useEffect(() => {
@@ -258,12 +262,16 @@ export function CaptureElement({
       onMouseMove={handleMove}
       onMouseUp={handleEnd}
       onMouseLeave={() => {
+        if (captureMode === "OFF") return;
         setShowCursor(false);
         handleEnd();
       }}
-      onMouseEnter={() => setShowCursor(true)}
+      onMouseEnter={() => {
+        if (captureMode === "OFF") return;
+        setShowCursor(true);
+      }}
     >
-      <div id="wrapper" className="wrapper">
+      <Content id="content">
         {children({
           captureMode,
           captureStatus,
@@ -276,9 +284,13 @@ export function CaptureElement({
           cropHeight: cropHeight / window.devicePixelRatio,
         })}
         {captureMode === "ON" && (
-          <div className="overlay" style={{ borderWidth: borderWidth }} />
+          <Overlay
+            style={{ borderWidth: borderWidth }}
+            overlayColor={overlayColor}
+            overlayOpacity={overlayOpacity}
+          />
         )}
-      </div>
+      </Content>
       {showCursor && (
         <Crosshairs
           style={{
@@ -295,24 +307,25 @@ export function CaptureElement({
 const Container = styled.div`
   width: 100%;
   height: 100%;
+`;
 
-  .wrapper {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    height: 100%;
-  }
+const Content = styled.div`
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+`;
 
-  .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: none;
-    border-color: rgba(0, 0, 0, 0.5);
-    border-style: solid;
-  }
+const Overlay = styled.div<{ overlayColor: string; overlayOpacity: number }>`
+  background: none;
+  border-color: ${({ overlayColor }) => overlayColor};
+  opacity: ${({ overlayOpacity }) => overlayOpacity};
+  border-style: solid;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 `;
 
 const Crosshairs = styled.div<{ cursorColor: string }>`
