@@ -175,6 +175,7 @@ export function CaptureElement({
 
     handleClickTakeScreenShot();
     setCaptureStatus("DONE");
+    setShowCursor(false);
     setCrossHairsLeft(0);
     setCrossHairsTop(0);
   };
@@ -213,7 +214,10 @@ export function CaptureElement({
     }
   };
 
-  const handleStartCapture = useCallback(() => setCaptureMode("ON"), []);
+  const handleStartCapture = useCallback(() => {
+    setCaptureMode("ON");
+    setShowCursor(true);
+  }, []);
 
   const handleStopCapture = useCallback(() => {
     setCaptureMode("OFF");
@@ -226,6 +230,7 @@ export function CaptureElement({
   const handleResetCapture = useCallback(() => {
     setBorderWidth(initialBorderWidth.current!);
     setCaptureStatus("NOT_YET");
+    setShowCursor(true);
   }, []);
 
   useEffect(() => {
@@ -242,14 +247,6 @@ export function CaptureElement({
     }
   }, []);
 
-  useEffect(() => {
-    if (captureMode === "ON" && captureStatus !== "DONE") {
-      setShowCursor(true);
-    } else {
-      setShowCursor(false);
-    }
-  }, [captureMode, captureStatus]);
-
   return (
     <Container
       onTouchStart={handleStart}
@@ -258,15 +255,6 @@ export function CaptureElement({
       onMouseDown={handleStart}
       onMouseMove={handleMove}
       onMouseUp={handleEnd}
-      onMouseLeave={() => {
-        if (captureMode === "OFF") return;
-        setShowCursor(false);
-        handleEnd();
-      }}
-      onMouseEnter={() => {
-        if (captureMode === "OFF") return;
-        setShowCursor(true);
-      }}
     >
       <Content id="content">
         {children({
@@ -288,7 +276,7 @@ export function CaptureElement({
           />
         )}
       </Content>
-      {showCursor && (
+      {showCursor === true && (
         <Crosshairs
           style={{
             left: crossHairsLeft,
