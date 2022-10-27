@@ -1,6 +1,6 @@
 {
   "name": "react-capture-element",
-  "version": "0.1.18",
+  "version": "0.1.1",
   "author": "Jinsun Park",
   "repository": {
     "type": "git",
@@ -24,15 +24,14 @@
     "dist"
   ],
   "scripts": {
-    "compile": "microbundle build -f modern,umd --globals react=React,react/jsx-runtime=jsxRuntime,@emotion/styled=styled --jsx React.createElement --jsxFragment React.Fragment --jsxImportSource react",
+    "compile": "rm -rf dist && microbundle build -f modern,umd --globals react=React,react/jsx-runtime=jsxRuntime,@emotion/styled=styled --jsx React.createElement --jsxFragment React.Fragment --jsxImportSource react",
     "postcompile": "cp dist/index.modern.mjs dist/index.modern.js && cp dist/index.modern.mjs.map dist/index.modern.js.map",
-    "dev": "webpack serve",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
   },
   "peerDependencies": {
-    "react": "^18.1.0",
-    "react-dom": "^18.1.0"
+    "react": "^18",
+    "react-dom": "^18"
   },
   "license": "MIT",
   "devDependencies": {
@@ -48,11 +47,11 @@
     "@storybook/manager-webpack5": "^6.5.13",
     "@storybook/react": "^6.5.13",
     "@storybook/testing-library": "^0.0.13",
-    "@types/react": "18.0.9",
-    "@types/react-dom": "18.0.4",
+    "@types/react": "^18.0.23",
+    "@types/react-dom": "^18.0.7",
     "microbundle": "^0.15.1",
-    "react": "18.1.0",
-    "react-dom": "18.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "storybook": "^6.5.13",
     "typescript": "^4.8.4"
   },

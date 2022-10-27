@@ -1,9 +1,14 @@
 import styled from "@emotion/styled";
 import html2canvas from "html2canvas";
-import React, { ReactNode, useEffect, useState } from "react";
+import * as React from "react";
 
 import { useElementSize } from "./useElementSize";
 import { isTouchEvent } from "./utils";
+
+const { useState, useEffect, useCallback, useRef } = React;
+
+type CaptureMode = "ON" | "OFF";
+type CaptureStatus = "NOT_YET" | "IN_PROGRESS" | "DONE";
 
 interface Props {
   onCapture: ({
@@ -13,23 +18,31 @@ interface Props {
     blob: Blob | null;
     dataUrl: string;
   }) => void;
+  cursorColor?: string;
   children: (props: {
-    isStartCapture: boolean;
-    startCapture: () => void;
+    captureMode: CaptureMode;
+    captureStatus: CaptureStatus;
+    onStartCapture: () => void;
+    onStopCapture: () => void;
+    onResetCapture: () => void;
     cropPositionTop: number;
     cropPositionLeft: number;
     cropWidth: number;
     cropHeight: number;
-  }) => ReactNode;
+  }) => React.ReactNode;
 }
 
-export function CaptureElement({ onCapture, children }: Props) {
+export function CaptureElement({
+  onCapture,
+  cursorColor = "#000",
+  children,
+}: Props) {
   const { elementWidth, elementHeight } = useElementSize(
     document.getElementById("wrapper")
   );
 
-  const [isStartCapture, setIsStartCapture] = useState<boolean>(false);
-  const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
+  const [captureMode, setCaptureMode] = useState<CaptureMode>("OFF");
+  const [captureStatus, setCaptureStatus] = useState<CaptureStatus>("NOT_YET");
   const [elementPositionLeft, setElementPositionLeft] = useState<number>(0);
   const [elementPositionTop, setElementPositionTop] = useState<number>(0);
   const [startX, setStartX] = useState<number>(0);
@@ -38,24 +51,17 @@ export function CaptureElement({ onCapture, children }: Props) {
   const [cropPositionLeft, setCropPositionLeft] = useState<number>(0);
   const [cropWidth, setCropWidth] = useState<number>(0);
   const [cropHeight, setCropHeight] = useState<number>(0);
-  const [borderWidth, setBorderWidth] = useState<any>(1);
+  const initialBorderWidth = useRef<string>("");
+  const [borderWidth, setBorderWidth] = useState<string>();
   const [crossHairsTop, setCrossHairsTop] = useState<number>(0);
   const [crossHairsLeft, setCrossHairsLeft] = useState<number>(0);
-
-  useEffect(() => {
-    const wrapper = document.getElementById("wrapper");
-
-    if (wrapper != null) {
-      const { x, y } = wrapper?.getBoundingClientRect();
-      setElementPositionLeft(x);
-      setElementPositionTop(y);
-    }
-  }, []);
+  const [showCursor, setShowCursor] = useState<boolean>(false);
 
   const handleStart = (e: any) => {
     const isMobile = isTouchEvent(e);
     if (
-      !isStartCapture ||
+      captureMode === "OFF" ||
+      captureStatus !== "NOT_YET" ||
       (isMobile && (e.touches == null || e.touches[0] == null))
     )
       return;
@@ -69,40 +75,43 @@ export function CaptureElement({ onCapture, children }: Props) {
     setStartY(startY);
     setCropPositionTop(startY);
     setCropPositionLeft(startX);
-    setIsMouseDown(true);
+    setCaptureStatus("IN_PROGRESS");
   };
 
   const handleMove = (e: any) => {
     const isMobile = isTouchEvent(e);
 
     if (
-      !isStartCapture ||
+      captureMode === "OFF" ||
       (isMobile && (e.touches == null || e.touches[0] == null))
     )
       return;
-
-    let cropPositionTop = startY;
-    let cropPositionLeft = startX;
 
     let endX = isMobile ? e.touches[0].clientX : e.clientX;
     let endY = isMobile ? e.touches[0].clientY : e.clientY;
     endX -= elementPositionLeft;
     endY -= elementPositionTop;
 
-    const isStartTop = endY >= startY;
-    const isStartBottom = endY <= startY;
-    const isStartLeft = endX >= startX;
-    const isStartRight = endX <= startX;
+    setCrossHairsLeft(endX + elementPositionLeft);
+    setCrossHairsTop(endY + elementPositionTop);
 
-    const isStartTopLeft = isStartTop && isStartLeft;
-    const isStartTopRight = isStartTop && isStartRight;
-    const isStartBottomLeft = isStartBottom && isStartLeft;
-    const isStartBottomRight = isStartBottom && isStartRight;
-    let newBorderWidth = borderWidth;
-    let cropWidth = 0;
-    let cropHeight = 0;
+    if (captureStatus === "IN_PROGRESS") {
+      let cropPositionTop = startY;
+      let cropPositionLeft = startX;
 
-    if (isMouseDown) {
+      const isStartTop = endY >= startY;
+      const isStartBottom = endY <= startY;
+      const isStartLeft = endX >= startX;
+      const isStartRight = endX <= startX;
+
+      const isStartTopLeft = isStartTop && isStartLeft;
+      const isStartTopRight = isStartTop && isStartRight;
+      const isStartBottomLeft = isStartBottom && isStartLeft;
+      const isStartBottomRight = isStartBottom && isStartRight;
+      let newBorderWidth = borderWidth;
+      let cropWidth = 0;
+      let cropHeight = 0;
+
       if (isStartTopLeft) {
         newBorderWidth = `${startY}px ${elementWidth - endX}px ${
           elementHeight - endY
@@ -138,30 +147,32 @@ export function CaptureElement({ onCapture, children }: Props) {
         cropPositionLeft = endX;
         cropPositionTop = endY;
       }
+
+      cropWidth *= window.devicePixelRatio;
+      cropHeight *= window.devicePixelRatio;
+
+      setBorderWidth(newBorderWidth);
+      setCropWidth(cropWidth);
+      setCropHeight(cropHeight);
+      setCropPositionTop(cropPositionTop);
+      setCropPositionLeft(cropPositionLeft);
     }
-
-    cropWidth *= window.devicePixelRatio;
-    cropHeight *= window.devicePixelRatio;
-
-    setCrossHairsLeft(endX + elementPositionLeft);
-    setCrossHairsTop(endY + elementPositionTop);
-    setBorderWidth(newBorderWidth);
-    setCropWidth(cropWidth);
-    setCropHeight(cropHeight);
-    setCropPositionTop(cropPositionTop);
-    setCropPositionLeft(cropPositionLeft);
   };
 
   const handleEnd = () => {
-    if (!isStartCapture) return;
+    if (captureMode === "OFF" || captureStatus !== "IN_PROGRESS") return;
+    if (
+      initialBorderWidth.current != null &&
+      borderWidth === initialBorderWidth.current
+    ) {
+      setCaptureStatus("NOT_YET");
+      return;
+    }
 
-    setBorderWidth(0);
-
-    setTimeout(() => {
-      handleClickTakeScreenShot();
-    }, 0);
-    setIsStartCapture(false);
-    setIsMouseDown(false);
+    handleClickTakeScreenShot();
+    setCaptureStatus("DONE");
+    setCrossHairsLeft(0);
+    setCrossHairsTop(0);
   };
 
   const handleClickTakeScreenShot = async () => {
@@ -196,10 +207,47 @@ export function CaptureElement({ onCapture, children }: Props) {
         });
       }
     }
-
-    setCrossHairsLeft(0);
-    setCrossHairsTop(0);
   };
+
+  const handleStartCapture = useCallback(() => setCaptureMode("ON"), []);
+
+  const handleStopCapture = useCallback(() => {
+    setCaptureMode("OFF");
+    setCaptureStatus("NOT_YET");
+    setBorderWidth(initialBorderWidth.current!);
+  }, []);
+
+  const handleResetCapture = useCallback(() => {
+    setBorderWidth(initialBorderWidth.current!);
+    setCaptureStatus("NOT_YET");
+  }, []);
+
+  useEffect(() => {
+    const wrapper = document.getElementById("wrapper");
+
+    if (wrapper != null) {
+      const { x, y } = wrapper?.getBoundingClientRect();
+      setElementPositionLeft(x);
+      setElementPositionTop(y);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (elementWidth && elementHeight) {
+      const borderWidth = `0px ${elementWidth}px ${elementHeight}px 0px`;
+
+      initialBorderWidth.current = borderWidth;
+      setBorderWidth(borderWidth);
+    }
+  }, [elementWidth, elementHeight]);
+
+  useEffect(() => {
+    if (captureMode === "ON" && captureStatus !== "DONE") {
+      setShowCursor(true);
+    } else {
+      setShowCursor(false);
+    }
+  }, [captureMode, captureStatus]);
 
   return (
     <Container
@@ -209,27 +257,35 @@ export function CaptureElement({ onCapture, children }: Props) {
       onMouseDown={handleStart}
       onMouseMove={handleMove}
       onMouseUp={handleEnd}
+      onMouseLeave={() => {
+        setShowCursor(false);
+        handleEnd();
+      }}
+      onMouseEnter={() => setShowCursor(true)}
     >
       <div id="wrapper" className="wrapper">
         {children({
-          startCapture: () => setIsStartCapture(true),
-          isStartCapture,
+          captureMode,
+          captureStatus,
+          onStartCapture: handleStartCapture,
+          onStopCapture: handleStopCapture,
+          onResetCapture: handleResetCapture,
           cropPositionTop,
           cropPositionLeft,
           cropWidth: cropWidth / window.devicePixelRatio,
           cropHeight: cropHeight / window.devicePixelRatio,
         })}
-        {isStartCapture && (
-          <div
-            className={`overlay ${isMouseDown && "highlighting"}`}
-            style={{ borderWidth: borderWidth }}
-          />
+        {captureMode === "ON" && (
+          <div className="overlay" style={{ borderWidth: borderWidth }} />
         )}
       </div>
-      {isStartCapture && (
-        <div
-          className="crosshairs"
-          style={{ left: crossHairsLeft + "px", top: crossHairsTop + "px" }}
+      {showCursor && (
+        <Crosshairs
+          style={{
+            left: crossHairsLeft,
+            top: crossHairsTop,
+          }}
+          cursorColor={cursorColor}
         />
       )}
     </Container>
@@ -242,21 +298,12 @@ const Container = styled.div`
 
   .wrapper {
     position: relative;
+    overflow: hidden;
     width: 100%;
     height: 100%;
-    overflow: hidden;
   }
 
   .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  .overlay.highlighting {
     position: absolute;
     top: 0;
     left: 0;
@@ -266,43 +313,31 @@ const Container = styled.div`
     border-color: rgba(0, 0, 0, 0.5);
     border-style: solid;
   }
+`;
 
-  .crosshairs {
-    position: fixed;
-    width: 100%;
-    z-index: 2147483645;
-  }
+const Crosshairs = styled.div<{ cursorColor: string }>`
+  position: fixed;
+  width: 100%;
+  z-index: 2147483645;
+  box-sizing: border-box;
 
-  .crosshairs.hidden {
-    display: none;
-  }
-
-  .crosshairs::before,
-  .crosshairs::after {
+  &::before,
+  &::after {
     content: "";
     position: absolute;
   }
 
-  .crosshairs::before {
+  &::before {
     height: 24px;
     width: 2px;
-    background: #000;
+    background: ${({ cursorColor }) => cursorColor};
     top: -11px;
   }
 
-  .crosshairs::after {
+  &::after {
     width: 24px;
     height: 2px;
-    background: #000;
+    background: ${({ cursorColor }) => cursorColor};
     left: -11px;
-  }
-
-  .crosshairs,
-  .crosshairs:before,
-  .crosshairs:after,
-  .overlay,
-  .overlay:before,
-  .overlay:after {
-    box-sizing: border-box;
   }
 `;

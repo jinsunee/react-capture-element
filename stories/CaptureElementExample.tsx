@@ -18,6 +18,7 @@ export default function CaptureElementExample({
     >
       <div
         style={{
+          position: "relative",
           border: "1px solid green",
           overflow: "hidden",
           width: 400,
@@ -25,9 +26,19 @@ export default function CaptureElementExample({
         }}
       >
         <CaptureElement onCapture={({ dataUrl }) => console.log(dataUrl)}>
-          {({ startCapture }) => (
+          {({
+            captureMode,
+            captureStatus,
+            onStartCapture,
+            onStopCapture,
+            onResetCapture,
+            cropPositionLeft,
+            cropPositionTop,
+            cropWidth,
+            cropHeight,
+          }) => (
             <>
-              <button onClick={startCapture}>start Capture</button>
+              <button onClick={onStartCapture}>start Capture</button>
               <div
                 style={{
                   backgroundColor,
@@ -39,10 +50,22 @@ export default function CaptureElementExample({
                   fontWeight: "bold",
                   fontSize: 20,
                 }}
-                onClick={startCapture}
               >
                 Capture me!
               </div>
+              {captureStatus === "DONE" && captureMode === "ON" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: cropPositionLeft + cropWidth - 20,
+                    top: cropPositionTop + cropHeight,
+                    zIndex: 999,
+                  }}
+                >
+                  <button onClick={onResetCapture}>Reset Capture</button>
+                  <button onClick={onStopCapture}>Stop Capture</button>
+                </div>
+              )}
             </>
           )}
         </CaptureElement>

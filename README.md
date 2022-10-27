@@ -1,4 +1,4 @@
-# react-capture-element
+# react-element-capture
 
 ## Install
 
@@ -36,7 +36,7 @@ export function Example() {
               <button onClick={startCapture}>start Capture</button>
               <div
                 style={{
-                  backgroundColor: 'reg',
+                  backgroundColor: 'red',
                   height: 300,
                   width: 300,
                   display: "flex",
