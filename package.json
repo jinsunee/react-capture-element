@@ -1,6 +1,6 @@
 {
   "name": "react-capture-element",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "author": "Jinsun Park",
   "repository": {
     "type": "git",
@@ -33,7 +33,6 @@
     "react": "^18",
     "react-dom": "^18"
   },
-  "license": "MIT",
   "devDependencies": {
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
@@ -57,5 +56,11 @@
   },
   "dependencies": {
     "html2canvas": "^1.4.1"
-  }
+  },
+  "keywords": [
+    "react",
+    "capture",
+    "screen-capture"
+  ],
+  "license": "MIT"
 }

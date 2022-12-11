@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import { CaptureElement } from "../src";
 
-export default function Example({
-  backgroundColor = "purple",
-}: {
-  backgroundColor: string;
-}) {
+export default function Example() {
   const [dataUrl, setDataUrl] = useState<string>();
+  const [size, setSize] = useState<{ width: number; height: number }>();
 
   return (
     <div
@@ -21,11 +18,16 @@ export default function Example({
         style={{
           position: "relative",
           overflow: "hidden",
-          width: 400,
-          height: 400,
+          width: 600,
+          height: 600,
         }}
       >
-        <CaptureElement onCapture={({ dataUrl }) => setDataUrl(dataUrl)}>
+        <CaptureElement
+          onCapture={({ dataUrl, size }) => {
+            setDataUrl(dataUrl);
+            setSize(size);
+          }}
+        >
           {({
             captureMode,
             captureStatus,
@@ -34,31 +36,23 @@ export default function Example({
             onResetCapture,
             cropPositionLeft,
             cropPositionTop,
-            cropWidth,
-            cropHeight,
           }) => (
             <>
               <button onClick={onStartCapture}>start Capture</button>
-              <div
+              <img
+                src={require("./assets/img.jpg")}
+                alt=""
                 style={{
-                  backgroundColor,
-                  height: 300,
-                  width: 300,
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  fontSize: 20,
+                  width: "100%",
+                  pointerEvents: "none",
                 }}
-              >
-                Capture me!
-              </div>
-              {captureStatus === "DONE" && captureMode === "ON" && (
+              />
+              {captureStatus === "DONE" && captureMode === "ON" && size && (
                 <div
                   style={{
                     position: "absolute",
-                    left: cropPositionLeft + cropWidth - 20,
-                    top: cropPositionTop + cropHeight,
+                    left: cropPositionLeft + size.width - 200,
+                    top: cropPositionTop + size.height,
                     zIndex: 999,
                   }}
                 >
@@ -72,7 +66,7 @@ export default function Example({
       </div>
       <div style={{ flex: 1 }}>
         {dataUrl != null && (
-          <img alt="data-url-image" src={dataUrl} style={{ width: 300 }} />
+          <img alt="data-url-image" src={dataUrl} style={{ ...size }} />
         )}
       </div>
     </div>

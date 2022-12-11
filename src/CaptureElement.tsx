@@ -10,13 +10,20 @@ const { useState, useEffect, useCallback, useRef } = React;
 type CaptureMode = "ON" | "OFF";
 type CaptureStatus = "NOT_YET" | "IN_PROGRESS" | "DONE";
 
+const SCALE = devicePixelRatio * devicePixelRatio;
+
 interface Props {
   onCapture: ({
     blob,
     dataUrl,
+    size,
   }: {
     blob: Blob | null;
     dataUrl: string;
+    size: {
+      width: number;
+      height: number;
+    };
   }) => void;
   cursorColor?: string;
   overlayColor?: string;
@@ -154,8 +161,8 @@ export function CaptureElement({
         cropPositionTop = endY;
       }
 
-      cropWidth *= window.devicePixelRatio;
-      cropHeight *= window.devicePixelRatio;
+      cropWidth *= SCALE;
+      cropHeight *= SCALE;
 
       setBorderWidth(newBorderWidth);
       setCropWidth(cropWidth);
@@ -194,10 +201,10 @@ export function CaptureElement({
       croppedCanvas.height = cropHeight;
 
       if (croppedCanvasContext && croppedCanvas) {
-        (croppedCanvasContext as CanvasRenderingContext2D).drawImage(
+        croppedCanvasContext.drawImage(
           canvas,
-          (elementPositionLeft + cropPositionLeft) * window.devicePixelRatio,
-          (elementPositionTop + cropPositionTop) * window.devicePixelRatio,
+          (elementPositionLeft + cropPositionLeft) * SCALE,
+          (elementPositionTop + cropPositionTop) * SCALE,
           cropWidth,
           cropHeight,
           0,
@@ -207,7 +214,14 @@ export function CaptureElement({
         );
 
         croppedCanvas.toBlob((blob) => {
-          onCapture({ blob, dataUrl: croppedCanvas.toDataURL() });
+          onCapture({
+            blob,
+            dataUrl: croppedCanvas.toDataURL(),
+            size: {
+              width: cropWidth / SCALE,
+              height: cropHeight / SCALE,
+            },
+          });
         });
       }
     }
@@ -216,7 +230,10 @@ export function CaptureElement({
   const handleStartCapture = useCallback(async () => {
     const body = document.querySelector("body");
     if (body) {
-      html2canvas(body).then((canvas) => (canvasRef.current = canvas));
+      // MEMO: input scale value for resolution
+      html2canvas(body, { scale: SCALE }).then(
+        (canvas) => (canvasRef.current = canvas)
+      );
     }
 
     setCaptureMode("ON");
@@ -269,8 +286,8 @@ export function CaptureElement({
           onResetCapture: handleResetCapture,
           cropPositionTop,
           cropPositionLeft,
-          cropWidth: cropWidth / window.devicePixelRatio,
-          cropHeight: cropHeight / window.devicePixelRatio,
+          cropWidth: cropWidth / SCALE,
+          cropHeight: cropHeight / SCALE,
         })}
         {captureMode === "ON" && (
           <Overlay

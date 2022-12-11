@@ -3,7 +3,7 @@
 react-capture-element allows you to capture all React Element, including images, pdf.
 
 ![NPM version](https://img.shields.io/npm/v/react-capture-element)
-![License](http://img.shields.io/npm/l/dooboo-ui-legacy.svg?style=flat-square)
+![License](http://img.shields.io/npm/l/react-capture-element.svg?style=flat-square)
 
 ## Preview
 
